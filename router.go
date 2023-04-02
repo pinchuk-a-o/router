@@ -28,16 +28,11 @@ func (i *Router) AddURL(url string, f func(w http.ResponseWriter, r *Request), m
 	key := i.getKey(url, method)
 
 	list := routeList{}
-	if _, ok := i.routes[key]; !ok {
+	if _, ok := i.routes[key]; ok {
 		list = i.routes[key]
 	}
 
 	list.Add(f, url)
-
-	o := sync.Once{}
-	o.Do(func() {
-		i.routes = map[string]routeList{}
-	})
 
 	i.routes[key] = list
 }
@@ -113,6 +108,7 @@ func NewRouter(mux *http.ServeMux) (r *Router) {
 		r = &Router{
 			mux:        mux,
 			handler404: default404,
+			routes:     make(map[string]routeList),
 		}
 
 		r.mux.HandleFunc("/", r.handler)

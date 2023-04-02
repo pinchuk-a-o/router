@@ -11,6 +11,8 @@ func TestRouter_AddURL(t *testing.T) {
 	r := NewRouter(mux)
 
 	r.AddURL("/foo", func(w http.ResponseWriter, r *Request) {}, TypeGet)
+	r.AddURL("/bar", func(w http.ResponseWriter, r *Request) {}, TypeGet)
+	r.AddURL("/foo/:id", func(w http.ResponseWriter, r *Request) {}, TypeGet)
 
 	url := r.prepareURL("/foo")
 	key := r.getKey(url, TypeGet)

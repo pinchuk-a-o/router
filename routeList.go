@@ -13,14 +13,14 @@ type routeList struct {
 func (r *routeList) Add(f func(w http.ResponseWriter, r *Request), url string) {
 	cases := r.urlToCases(url)
 
-	route := &route{handler: f, cases: cases}
+	rt := &route{handler: f, cases: cases}
 
 	if r.route == nil {
-		r.route = route
+		r.route = rt
 	} else {
-		route.next = r.route
+		rt.next = r.route
 
-		r.route = route
+		r.route = rt
 	}
 }
 
