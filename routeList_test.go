@@ -5,7 +5,37 @@ import (
 	"testing"
 )
 
-func TestRouteList_Find(t *testing.T) {
+func TestRouteList_Find1Case(t *testing.T) {
+	r := &routeList{}
+
+	url1t := "foo1"
+	url1 := "foo1"
+	url2t := "foo"
+	url2 := "foo"
+	url3t := "bar"
+	url3 := "bar"
+
+	r.Add(func(w http.ResponseWriter, r *Request) {}, url1t)
+	r.Add(func(w http.ResponseWriter, r *Request) {}, url2t)
+	r.Add(func(w http.ResponseWriter, r *Request) {}, url3t)
+
+	_, err1 := r.Find(url1)
+	if err1 != nil {
+		t.Error(url1 + " not found")
+	}
+
+	_, err2 := r.Find(url2)
+	if err2 != nil {
+		t.Error(url2 + " not found")
+	}
+
+	_, err3 := r.Find(url3)
+	if err3 != nil {
+		t.Error(url3 + " not found")
+	}
+}
+
+func TestRouteList_Find2Cases(t *testing.T) {
 	r := &routeList{}
 
 	url1t := "foo1/:name"
