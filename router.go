@@ -50,8 +50,8 @@ func (i Router) prepareURL(url string) (result string) {
 	}
 
 	result = url[1:]
-	if result[len(url)-1:] == "/" {
-		result = url[1 : len(url)-1]
+	if result[len(result)-1:] == "/" {
+		result = result[0 : len(result)-1]
 	}
 
 	return
