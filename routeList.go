@@ -7,13 +7,13 @@ import (
 )
 
 type routeList struct {
-	route *route
+	route *Route
 }
 
-func (r *routeList) Add(f func(w http.ResponseWriter, r *Request), url string) {
+func (r *routeList) Add(f func(w http.ResponseWriter, r *Request), url string) *Route {
 	cases := r.urlToCases(url)
 
-	rt := &route{handler: f, cases: cases}
+	rt := &Route{handler: f, cases: cases}
 
 	if r.route == nil {
 		r.route = rt
@@ -22,15 +22,17 @@ func (r *routeList) Add(f func(w http.ResponseWriter, r *Request), url string) {
 
 		r.route = rt
 	}
+
+	return rt
 }
 
-func (r routeList) Find(url string) (fRule route, err error) {
+func (r *routeList) Find(url string) (fRule *Route, err error) {
 	currentURLCases := r.urlToCases(url)
 
 	currentRule := r.route
 	for {
 		if currentRule.compareRule(currentURLCases) {
-			fRule = *currentRule
+			fRule = currentRule
 			return
 		}
 
@@ -43,7 +45,7 @@ func (r routeList) Find(url string) (fRule route, err error) {
 	}
 }
 
-func (r routeList) urlToCases(url string) (cases []string) {
+func (r *routeList) urlToCases(url string) (cases []string) {
 	cases = strings.Split(url, "/")
 
 	return
@@ -51,14 +53,23 @@ func (r routeList) urlToCases(url string) (cases []string) {
 
 //-------------------------------------------------------------------
 
-type route struct {
+// Route ...
+type Route struct {
 	cases     []string
 	handler   func(w http.ResponseWriter, r *Request)
-	next      *route
+	next      *Route
 	variables map[string]string
+	rules     Rules
 }
 
-func (r *route) compareRule(cases []string) (ok bool) {
+// SetRules ...
+func (r *Route) SetRules(rules map[string]Rule) *Route {
+	r.rules.setRules(rules)
+
+	return r
+}
+
+func (r *Route) compareRule(currentURLCases []string) (ok bool) {
 	var tempVariables = map[string]string{}
 	var casesLen = len(r.cases)
 
@@ -66,9 +77,9 @@ func (r *route) compareRule(cases []string) (ok bool) {
 		tempVariables = map[string]string{}
 		urlCase := r.cases[i]
 
-		if r.isVariable(urlCase) {
-			tempVariables[urlCase[1:]] = cases[i]
-		} else if urlCase != cases[i] {
+		if r.isVariable(urlCase) && r.rules.compare(urlCase, currentURLCases[i]) {
+			tempVariables[urlCase[1:]] = currentURLCases[i]
+		} else if urlCase != currentURLCases[i] {
 			return
 		}
 	}
@@ -79,7 +90,7 @@ func (r *route) compareRule(cases []string) (ok bool) {
 	return
 }
 
-func (r *route) isVariable(urlCase string) (ok bool) {
+func (r *Route) isVariable(urlCase string) (ok bool) {
 	if len(urlCase) == 0 {
 		return
 	}

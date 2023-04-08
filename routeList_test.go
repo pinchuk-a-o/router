@@ -5,6 +5,28 @@ import (
 	"testing"
 )
 
+func TestRouteList_Add(t *testing.T) {
+	r := &routeList{}
+
+	url1 := "foo"
+	url2 := "bar"
+
+	r.Add(func(w http.ResponseWriter, r *Request) {}, url1)
+	r.Add(func(w http.ResponseWriter, r *Request) {}, url2)
+
+	c1 := r.route
+
+	if c1.cases[0] != url2 {
+		t.Error(url2 + " not found")
+	}
+
+	c2 := c1.next
+
+	if c2.cases[0] != url1 {
+		t.Error(url1 + " not found")
+	}
+}
+
 func TestRouteList_Find1Case(t *testing.T) {
 	r := &routeList{}
 
@@ -74,5 +96,29 @@ func TestRouteList_Find2Cases(t *testing.T) {
 
 	if r3.variables["id"] != "2" {
 		t.Error(url3 + " variables not found")
+	}
+}
+
+func TestRouteList_FindNotFound(t *testing.T) {
+	r := &routeList{}
+
+	url1t := "foo1/bar"
+	url2t := "foo/baz"
+	url3t := "bar/bar"
+
+	url := "foo/foo"
+
+	r.Add(func(w http.ResponseWriter, r *Request) {}, url1t)
+	r.Add(func(w http.ResponseWriter, r *Request) {}, url2t)
+	r.Add(func(w http.ResponseWriter, r *Request) {}, url3t)
+
+	rt, err := r.Find(url)
+
+	if err == nil {
+		t.Error(url + " no error")
+	}
+
+	if rt != nil {
+		t.Error(url + " founded")
 	}
 }

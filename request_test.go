@@ -9,7 +9,5 @@ func TestRequest_GetVariable(t *testing.T) {
 
 	if v, ok := r.GetVariable("id"); !ok || v != "1" {
 		t.Error("TestRequest_GetVariable ERROR")
-	} else {
-		t.Log("TestRequest_GetVariable DONE")
 	}
 }

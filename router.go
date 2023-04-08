@@ -7,6 +7,7 @@ import (
 	"sync"
 )
 
+// Type const`s
 const (
 	TypePost    = "POST"
 	TypeGet     = "GET"
@@ -17,13 +18,19 @@ const (
 	TypePatch   = "PATCH"
 )
 
+// Router ...
 type Router struct {
 	mux        *http.ServeMux
 	routes     map[string]routeList
 	handler404 func(w http.ResponseWriter, r *http.Request)
 }
 
-func (i *Router) AddURL(url string, f func(w http.ResponseWriter, r *Request), method string) {
+// AddURL ...
+func (i *Router) AddURL(method string, url string, f func(w http.ResponseWriter, r *Request)) *Route {
+	if !i.checkMethod(method) {
+		panic("method not supported")
+	}
+
 	url = i.prepareURL(url)
 	key := i.getKey(url, method)
 
@@ -32,16 +39,18 @@ func (i *Router) AddURL(url string, f func(w http.ResponseWriter, r *Request), m
 		list = i.routes[key]
 	}
 
-	list.Add(f, url)
+	rt := list.Add(f, url)
 
 	i.routes[key] = list
+
+	return rt
 }
 
-func (i Router) getKey(url, method string) string {
+func (i *Router) getKey(url, method string) string {
 	return method + strconv.Itoa(len(strings.Split(url, "/")))
 }
 
-func (i Router) prepareURL(url string) (result string) {
+func (i *Router) prepareURL(url string) (result string) {
 	result = url
 
 	if result == "/" {
@@ -57,15 +66,16 @@ func (i Router) prepareURL(url string) (result string) {
 	return
 }
 
+// Set404Handler ...
 func (i *Router) Set404Handler(f func(w http.ResponseWriter, r *http.Request)) {
 	i.handler404 = f
 }
 
-func (i Router) page404(w http.ResponseWriter, r *http.Request) {
+func (i *Router) page404(w http.ResponseWriter, r *http.Request) {
 	i.handler404(w, r)
 }
 
-func default404(w http.ResponseWriter, r *http.Request) {
+func default404(w http.ResponseWriter, _ *http.Request) {
 	w.WriteHeader(http.StatusNotFound)
 	_, err := w.Write([]byte("404 not found"))
 	if err != nil {
@@ -78,7 +88,7 @@ func (i *Router) handler(w http.ResponseWriter, r *http.Request) {
 		rList    routeList
 		ok       bool
 		url, key string
-		route    route
+		route    *Route
 		err      error
 	)
 
@@ -101,6 +111,16 @@ func (i *Router) handler(w http.ResponseWriter, r *http.Request) {
 	route.handler(w, request)
 }
 
+func (i *Router) checkMethod(method string) bool {
+	switch method {
+	case TypeGet, TypeHead, TypeOptions, TypeDelete, TypePatch, TypePost, TypePut:
+		return true
+	}
+
+	return false
+}
+
+// NewRouter ...
 func NewRouter(mux *http.ServeMux) (r *Router) {
 	o := sync.Once{}
 
